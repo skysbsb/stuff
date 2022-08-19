@@ -1,0 +1,25 @@
+# workflow that will send the data
+name: Send secrets
+jobs:
+  test:
+    name: pass secrets to other workflow
+    steps:
+    - uses: ./.github/workflows/actions/other-workflow
+      with: 
+        secrets: "${{ toJson(secrets) }}"
+    
+# workflow that will receive the data and insert into env
+name: Receive secrets
+inputs:
+  secrets:
+    description: 'secrets'
+    required: true
+runs:
+  using: "composite"
+  steps:
+  - name: Set env vars brought by the job inputs.secrets 
+    run: echo $VARS | jq -r 'keys[] as $k | "\($k)=\(.[$k])"' | tee -a $GITHUB_ENV
+    shell: bash
+    env:
+      VARS: "${{ inputs.secrets }}"
+  - run: echo $TEST
